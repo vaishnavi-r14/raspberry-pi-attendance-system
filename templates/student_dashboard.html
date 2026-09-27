@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Dashboard - AttendVision</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #070913; --surface: #0f172a; --card: #1e293b; --primary: #6366f1; --accent-cyan: #06b6d4; --accent-green: #10b981; --accent-red: #ef4444; --text-main: #f8fafc; --text-muted: #94a3b8; --border-glow: rgba(99, 102, 241, 0.25); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 25px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 12px; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px 18px; border-radius: 14px; border: 1px solid var(--border-glow); margin-bottom: 15px; }
+        .card { background: var(--surface); border: 1px solid var(--border-glow); border-radius: 14px; padding: 16px; margin-bottom: 15px; }
+        .btn { padding: 8px 12px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-cyan { background: var(--accent-cyan); color: #000; }
+        .btn-green { background: var(--accent-green); color: #fff; }
+        .btn-red { background: var(--accent-red); color: #fff; }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: none; }
+        .drawer-overlay.active { display: block; }
+        .drawer { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface); z-index: 1000; border-left: 1px solid var(--border-glow); padding: 20px 15px; transition: right 0.3s ease; display: flex; flex-direction: column; gap: 10px; }
+        .drawer.active { right: 0; }
+        .drawer a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--text-main); font-size: 0.88rem; font-weight: 600; text-decoration: none; border-radius: 8px; }
+        .drawer a:hover { background: rgba(99,102,241,0.2); }
+        .section-view { display: none; }
+        .section-view.active { display: block; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: var(--card); border: 1px solid var(--border-glow); border-radius: 12px; padding: 12px; text-align: center; }
+        .chat-box { height: 260px; overflow-y: auto; background: #000; border: 1px solid var(--border-glow); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .chat-msg { background: #1e293b; padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 0.8rem; word-break: break-word; }
+        .chat-msg.mine { align-self: flex-end; background: #4f46e5; }
+        table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
+        th, td { padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.8rem; word-break: break-word; }
+        th { color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; }
+        .greeting-banner { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.2)); border: 1px solid var(--border-glow); border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; font-size: 0.9rem; font-weight: 700; color: var(--accent-cyan); }
+        .toast-notif { position: fixed; bottom: 20px; right: 20px; background: #1e293b; border: 1px solid var(--accent-cyan); border-radius: 10px; padding: 12px 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    {% if greeting %}
+    <div class="greeting-banner"><i class="fa-solid fa-sparkles"></i> {{ greeting }}</div>
+    {% endif %}
+
+    <div class="navbar">
+        <div>
+            <h3 style="font-size: 1.05rem;">{{ student_name }}</h3>
+            <span style="font-size: 0.72rem; color: var(--accent-cyan);">{{ student_usn }} • {{ student_group }}</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-cyan" onclick="openNotifModal()"><i class="fa-solid fa-bell"></i> <span id="notifBadge" style="background: red; color: #fff; padding: 1px 5px; border-radius: 10px; font-size: 0.65rem;">0</span></button>
+            <button style="background: #1e293b; color: #fff; border: 1px solid var(--border-glow); padding: 8px 12px; border-radius: 8px; cursor: pointer;" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></button>
+        </div>
+    </div>
+
+    <!-- Attendance & Chat View -->
+    <div id="view-overview" class="section-view active">
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Attendance Score</div>
+                <div style="font-size: 1.6rem; font-weight: 800; color: {% if percentage >= 75 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{{ percentage }}%</div>
+            </div>
+            <div class="stat-box">
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Attended / Total</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: var(--accent-cyan);">{{ present_sessions }} / {{ total_sessions }}</div>
+            </div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 8px;"><i class="fa-solid fa-qrcode"></i> Digital QR Badge</h4>
+            <div style="background: #fff; padding: 8px; border-radius: 10px; display: inline-block; margin-bottom: 6px;">
+                <img src="/get_qr/{{ student_usn }}" style="width: 120px; height: 120px; display: block;">
+            </div>
+            <div style="font-size: 0.8rem; font-weight: 700;">{{ student_usn }}</div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="color: var(--accent-cyan); font-size: 0.9rem;"><i class="fa-solid fa-comments"></i> Chat Channels</h4>
+                <select id="chatTargetSelect" onchange="switchChatTarget()" style="padding: 6px 10px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff; font-size: 0.78rem; outline: none;">
+                    <option value="group">👥 {{ student_group }} (Group Channel)</option>
+                    <optgroup label="Direct Peer Messaging">
+                        {% for p in group_peers %}
+                        <option value="{{ p.usn }}">👤 {{ p.name }} ({{ p.usn }})</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            <div id="chatBox" class="chat-box"></div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="chatInput" placeholder="Write message..." style="flex: 1; padding: 8px 12px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem;" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                <button class="btn btn-cyan" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardware Requisitions View -->
+    <div id="view-hardware" class="section-view">
+        <div class="card">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 10px;"><i class="fa-solid fa-microchip"></i> Request Project Hardware</h4>
+            <form action="/student_add_component" method="POST">
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.75rem; color: var(--text-muted);">Component Name</label>
+                    <input type="text" name="component_name" placeholder="e.g. ESP8266, Sensor" required style="width: 100%; padding: 8px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Quantity</label>
+                        <input type="number" name="quantity" value="1" min="1" max="10" required style="width: 100%; padding: 8px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff;">
+                    </div>
+                    <div style="flex: 2;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Purpose / Notes</label>
+                        <input type="text" name="notes" placeholder="IoT Lab Module 3" style="width: 100%; padding: 8px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff;">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-green"><i class="fa-solid fa-plus"></i> Submit Request</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4 style="color: var(--accent-green); margin-bottom: 8px;"><i class="fa-solid fa-list"></i> My Requisitions</h4>
+            <table>
+                <thead>
+                    <tr><th style="width: 30%;">Item</th><th style="width: 15%;">Qty</th><th style="width: 25%;">Status</th><th style="width: 30%;">Dates</th></tr>
+                </thead>
+                <tbody>
+                    {% for c in my_components %}
+                    <tr>
+                        <td><strong>{{ c.comp }}</strong></td>
+                        <td>x{{ c.qty }}</td>
+                        <td>
+                            {% if c.status == 'PENDING' %}
+                            <span style="color: #f87171; font-weight: 700;">PENDING</span>
+                            {% elif c.status == 'APPROVED' %}
+                            <span style="color: var(--accent-green); font-weight: 700;">APPROVED</span>
+                            {% else %}
+                            <span style="color: var(--text-muted);">RETURNED</span>
+                            {% endif %}
+                        </td>
+                        <td style="color: var(--text-muted); font-size: 0.72rem;">{{ c.req_date }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 12px;">No requests found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Study Materials View -->
+    <div id="view-materials" class="section-view">
+        <div class="card">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 8px;"><i class="fa-solid fa-folder-open"></i> Course Materials</h4>
+            <table>
+                <thead>
+                    <tr><th style="width: 35%;">Title</th><th style="width: 20%;">Target</th><th style="width: 25%;">Date</th><th style="width: 20%;">Download</th></tr>
+                </thead>
+                <tbody>
+                    {% for f in shared_files %}
+                    <tr>
+                        <td><strong>{{ f.title }}</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">{{ f.filename }}</span></td>
+                        <td><span style="background: rgba(6,182,212,0.2); color: var(--accent-cyan); padding: 2px 6px; border-radius: 4px; font-size: 0.72rem;">{{ f.group }}</span></td>
+                        <td style="color: var(--text-muted);">{{ f.date }}</td>
+                        <td><a href="/download_file/{{ f.filename }}" class="btn btn-cyan" style="padding: 4px 8px; font-size: 0.72rem;"><i class="fa-solid fa-download"></i> Download</a></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 12px;">No files available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="notifModal" class="drawer-overlay" style="display: none; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-bell"></i> Notifications</h4>
+            <button class="btn btn-red" style="padding: 3px 8px; font-size: 0.72rem;" onclick="closeNotifModal()">Close</button>
+        </div>
+        <div id="notifList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+</div>
+
+<div id="toastNotif" class="toast-notif">
+    <strong id="toastTitle" style="color: var(--accent-cyan); font-size: 0.85rem;"></strong>
+    <p id="toastBody" style="font-size: 0.75rem; color: #fff; margin-top: 2px;"></p>
+</div>
+
+<div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+<div id="drawer" class="drawer">
+    <h3 style="color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;"><i class="fa-solid fa-bars"></i> Portal Navigation</h3>
+    <a href="javascript:void(0)" onclick="switchView('overview')"><i class="fa-solid fa-chart-line"></i> Attendance & QR Badge</a>
+    <a href="javascript:void(0)" onclick="switchView('hardware')"><i class="fa-solid fa-boxes-stacked"></i> Project Hardware</a>
+    <a href="javascript:void(0)" onclick="switchView('materials')"><i class="fa-solid fa-file-arrow-down"></i> Course Materials</a>
+    <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+        <a href="/logout" style="color: var(--accent-red);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
+    </div>
+</div>
+
+<script>
+    const MY_USN = "{{ student_usn }}";
+    let lastNotifCount = 0;
+
+    function toggleDrawer() {
+        document.getElementById('drawer').classList.toggle('active');
+        document.getElementById('drawerOverlay').classList.toggle('active');
+    }
+
+    function switchView(viewName) {
+        document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-' + viewName).classList.add('active');
+        toggleDrawer();
+    }
+
+    function openNotifModal() { document.getElementById('notifModal').style.display = 'flex'; }
+    function closeNotifModal() { document.getElementById('notifModal').style.display = 'none'; }
+
+    async function loadChatMessages() {
+        const sel = document.getElementById('chatTargetSelect').value;
+        const url = sel === 'group' ? '/api/get_chats?type=group' : `/api/get_chats?type=direct&peer_usn=${sel}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = data.map(m => `
+            <div class="chat-msg ${m.usn === MY_USN ? 'mine' : ''}">
+                <strong style="font-size: 0.7rem; color: ${m.usn === MY_USN ? '#a5b4fc' : 'var(--accent-cyan)'};">${m.name}</strong><br>
+                ${m.text}
+                <div style="font-size: 0.6rem; color: var(--text-muted); text-align: right;">${m.time}</div>
+            </div>
+        `).join('');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendChatMessage() {
+        const inp = document.getElementById('chatInput');
+        const text = inp.value.trim();
+        if(!text) return;
+        inp.value = '';
+
+        const sel = document.getElementById('chatTargetSelect').value;
+        const payload = sel === 'group' 
+            ? { type: 'group', message: text }
+            : { type: 'direct', recipient_usn: sel, message: text };
+
+        await fetch('/api/send_chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        loadChatMessages();
+    }
+
+    function switchChatTarget() { loadChatMessages(); }
+
+    async function checkLiveNotifications() {
+        try {
+            const res = await fetch('/api/get_notifications');
+            const list = await res.json();
+            document.getElementById('notifBadge').innerText = list.length;
+
+            if(list.length > lastNotifCount && lastNotifCount > 0) {
+                const latest = list[0];
+                document.getElementById('toastTitle').innerText = latest.title;
+                document.getElementById('toastBody').innerText = latest.message;
+                const toast = document.getElementById('toastNotif');
+                toast.style.display = 'block';
+                setTimeout(() => { toast.style.display = 'none'; }, 4000);
+            }
+            lastNotifCount = list.length;
+
+            document.getElementById('notifList').innerHTML = list.map(n => `
+                <div style="background: var(--card); border: 1px solid var(--border-glow); padding: 8px 10px; border-radius: 8px;">
+                    <strong style="font-size: 0.78rem; color: var(--accent-cyan);">${n.title}</strong>
+                    <p style="font-size: 0.72rem; margin: 3px 0;">${n.message}</p>
+                    <span style="font-size: 0.62rem; color: var(--text-muted);">${n.time}</span>
+                </div>
+            `).join('') || '<div style="color: var(--text-muted); text-align: center; padding: 10px;">No notifications.</div>';
+        } catch(e){}
+    }
+
+    loadChatMessages();
+    checkLiveNotifications();
+    setInterval(loadChatMessages, 3500);
+    setInterval(checkLiveNotifications, 4000);
+
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view && document.getElementById('view-' + view)) {
+        document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-' + view).classList.add('active');
+    }
+</script>
+</body>
+</html>

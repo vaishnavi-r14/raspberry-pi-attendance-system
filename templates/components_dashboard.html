@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hardware Components - AttendVision</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #070913; --surface: #0f172a; --primary: #6366f1; --accent-cyan: #06b6d4; --accent-green: #10b981; --accent-red: #ef4444; --text-main: #f8fafc; --text-muted: #94a3b8; --border-glow: rgba(99, 102, 241, 0.25); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding: 15px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border-glow); margin-bottom: 15px; }
+        .card { background: var(--surface); border: 1px solid var(--border-glow); border-radius: 14px; padding: 16px; margin-bottom: 15px; }
+        .btn { padding: 8px 12px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-green { background: var(--accent-green); color: #fff; }
+        .btn-cyan { background: var(--accent-cyan); color: #000; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-glow); color: var(--text-main); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; }
+        th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.68rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="top-nav">
+        <h3 style="font-size: 1.05rem;"><i class="fa-solid fa-boxes-stacked" style="color: #f59e0b;"></i> Components Tracking</h3>
+        <div style="display: flex; gap: 8px;">
+            <a href="/export_returned_csv" class="btn btn-cyan"><i class="fa-solid fa-file-csv"></i> Export Returned History CSV</a>
+            <a href="/admin" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+        </div>
+    </div>
+    <div class="card">
+        <h4 style="margin-bottom: 10px; color: var(--accent-cyan);"><i class="fa-solid fa-dolly"></i> Active Hardware Requisitions</h4>
+        <table>
+            <thead>
+                <tr><th>Student & Group</th><th>Component & Qty</th><th>Notes</th><th>Status</th><th>Dates</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {% for r in requests %}
+                <tr>
+                    <td><strong>{{ r.name }}</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">{{ r.usn }} ({{ r.group }})</span></td>
+                    <td><strong style="color: #818cf8;">{{ r.comp }}</strong> (x{{ r.qty }})</td>
+                    <td style="color: var(--text-muted);">{{ r.notes or 'None' }}</td>
+                    <td>
+                        {% if r.status == 'PENDING' %}
+                        <span style="color: #f87171; font-weight: 700;">PENDING</span>
+                        {% elif r.status == 'APPROVED' %}
+                        <span style="color: var(--accent-green); font-weight: 700;">APPROVED</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.72rem;">
+                        Req: {{ r.req_date }}<br>
+                        {% if r.app_date %}App: {{ r.app_date }}{% endif %}
+                    </td>
+                    <td>
+                        {% if r.status == 'PENDING' %}
+                        <form action="/approve_component/{{ r.id }}" method="POST">
+                            <button type="submit" class="btn btn-green" style="padding: 5px 10px; font-size: 0.72rem;"><i class="fa-solid fa-check"></i> Approve</button>
+                        </form>
+                        {% elif r.status == 'APPROVED' %}
+                        <form action="/mark_component_received/{{ r.id }}" method="POST" onsubmit="return confirm('Mark returned and archive?');">
+                            <button type="submit" class="btn btn-cyan" style="padding: 5px 10px; font-size: 0.72rem;"><i class="fa-solid fa-arrow-rotate-left"></i> Return</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 15px;">No active requests.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

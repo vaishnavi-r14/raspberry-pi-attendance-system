@@ -179,3 +179,74 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment/secrets
+.env
+*.env
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Private student/face data
+face_data/
+student_photos/
+student_qrs/
+
+# Generated attendance data
+*.csv
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Student/private data
+student_photos/
+student_qrs/
+face_data/
+shared_materials/
+
+# Generated files
+returned_components_history.csv
+
+# Generated attendance/project data
+attendance.db
+student_photos/
+student_qrs/
+face_data/
+returned_components_history.csv
+student_qrs/
+shared_materials/
+returned_components_history.csv

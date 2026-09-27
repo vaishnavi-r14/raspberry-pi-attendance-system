@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/png" href="/static/icon.png">
+    <link rel="apple-touch-icon" href="/static/icon.png">
+    <title>AttendVision - Institution Portal Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color: #f1f5f9; --card-bg: #ffffff; --primary: #0284c7; --accent-red: #dc2626; --text-dark: #1e293b; --text-gray: #64748b; --border-color: #cbd5e1; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg-color); color: var(--text-dark); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        .login-card { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid var(--border-color); padding: 26px 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); text-align: center; }
+        .inst-header { margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        .inst-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; text-transform: uppercase; }
+        .inst-subtitle { font-size: 0.72rem; color: var(--text-gray); font-weight: 600; letter-spacing: 0.5px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+        .form-group label span { color: var(--accent-red); }
+        .form-group input { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; outline: none; background: #fff; color: #000; }
+        .role-radio-group { display: flex; align-items: center; gap: 24px; margin-top: 6px; margin-bottom: 8px; }
+        .role-radio-group label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 700; cursor: pointer; color: var(--text-dark); }
+        .role-radio-group input[type="radio"] { width: 18px; height: 18px; accent-color: var(--primary); }
+        .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+        .btn-login { flex: 1; padding: 12px; background: #0d9488; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+        .btn-forgot { flex: 1; padding: 12px; background: var(--accent-red); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; text-decoration: none; }
+        .maintenance-box { margin-top: 20px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px; font-size: 0.75rem; color: #991b1b; font-weight: 600; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 15px; }
+        .modal.active { display: flex; }
+        .modal-card { background: #fff; width: 100%; max-width: 400px; border-radius: 14px; padding: 22px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="inst-header">
+        <i class="fa-solid fa-graduation-cap" style="font-size: 2.2rem; color: var(--primary); margin-bottom: 6px;"></i>
+        <div class="inst-title">AttendVision Portal</div>
+        <div class="inst-subtitle">Smart Biometric & Hardware Management System</div>
+    </div>
+    <form method="POST" action="/login">
+        <div class="form-group">
+            <label><span>*</span> Role</label>
+            <div class="role-radio-group">
+                <label><input type="radio" name="role" value="Staff" checked onchange="updatePlaceholder('staff')"> Staff</label>
+                <label><input type="radio" name="role" value="Student" onchange="updatePlaceholder('student')"> Student</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label><span>*</span> Username</label>
+            <input type="text" id="usernameInput" name="username" placeholder="Mobile NO / Email / Staff Code" required>
+        </div>
+        <div class="form-group">
+            <label><span>*</span> Password</label>
+            <input type="password" id="passwordInput" name="password" placeholder="Password" required>
+            <div style="margin-top: 6px; font-size: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" id="showPwd" onchange="document.getElementById('passwordInput').type = this.checked ? 'text' : 'password'">
+                <label for="showPwd" style="font-weight: 500; cursor: pointer;">Show Password</label>
+            </div>
+        </div>
+        <div class="btn-row">
+            <button type="submit" class="btn-login">Login</button>
+            <button type="button" class="btn-forgot" onclick="openForgotModal()">Forgot Password</button>
+        </div>
+    </form>
+    <div class="maintenance-box">
+        <i class="fa-solid fa-triangle-exclamation"></i> System under maintenance daily: <strong>11:55 PM to 12:30 AM</strong>.
+    </div>
+</div>
+
+<div id="forgotModal" class="modal">
+    <div class="modal-card">
+        <h4 style="font-size: 1.05rem; margin-bottom: 8px; color: var(--text-dark);"><i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> Reset Password via Admin OTP</h4>
+        <p style="font-size: 0.78rem; color: var(--text-gray); margin-bottom: 14px;">An OTP will be dispatched to <strong>attendvision1@gmail.com</strong>.</p>
+        <div id="step1">
+            <div class="form-group">
+                <label>Admin or Student USN</label>
+                <input type="text" id="resetUser" placeholder="Enter 'admin' or Student USN">
+            </div>
+            <button type="button" id="sendOtpBtn" class="btn-login" style="width: 100%;" onclick="sendOTP()"><i class="fa-solid fa-paper-plane"></i> Send OTP</button>
+        </div>
+        <form id="step2" style="display: none; margin-top: 10px;" method="POST" action="/verify_reset_password">
+            <input type="hidden" id="targetUsn" name="target_usn">
+            <div class="form-group">
+                <label>Enter 6-Digit OTP</label>
+                <input type="text" name="otp_code" placeholder="123456" maxlength="6" required>
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="new_password" placeholder="Enter new password" required>
+            </div>
+            <button type="submit" class="btn-login" style="width: 100%; background: #0284c7;"><i class="fa-solid fa-key"></i> Set Password</button>
+        </form>
+        <button type="button" onclick="closeForgotModal()" style="width: 100%; padding: 8px; margin-top: 8px; background: transparent; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Cancel</button>
+    </div>
+</div>
+
+<script>
+    function updatePlaceholder(role) {
+        const input = document.getElementById('usernameInput');
+        input.placeholder = role === 'staff' ? "Mobile NO / Email / Staff Code" : "Registered Email ID / Student USN";
+    }
+    function openForgotModal() { document.getElementById('forgotModal').classList.add('active'); }
+    function closeForgotModal() { document.getElementById('forgotModal').classList.remove('active'); }
+    async function sendOTP() {
+        const user = document.getElementById('resetUser').value.trim();
+        const sendBtn = document.getElementById('sendOtpBtn');
+        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+        sendBtn.disabled = true;
+        const formData = new FormData();
+        formData.append('reset_identifier', user);
+        try {
+            const res = await fetch('/forgot_password_otp', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                document.getElementById('targetUsn').value = (user === 'admin' || user === '') ? '' : user;
+            }
+        } catch(e) {
+            sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send OTP';
+            sendBtn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

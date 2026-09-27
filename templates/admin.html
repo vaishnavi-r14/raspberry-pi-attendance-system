@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AttendVision Master Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #070913; --surface: #0f172a; --card: #1e293b; --primary: #6366f1; --accent-cyan: #06b6d4; --accent-green: #10b981; --accent-red: #ef4444; --text-main: #f8fafc; --text-muted: #94a3b8; --border-glow: rgba(99, 102, 241, 0.25); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 30px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 12px; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px 18px; border-radius: 14px; border: 1px solid var(--border-glow); margin-bottom: 15px; }
+        .nav-title { font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #fff; }
+        .menu-btn { background: #1e293b; color: #fff; border: 1px solid var(--border-glow); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: none; }
+        .drawer-overlay.active { display: block; }
+        .drawer { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface); z-index: 1000; border-left: 1px solid var(--border-glow); padding: 20px 15px; transition: right 0.3s ease; display: flex; flex-direction: column; gap: 10px; }
+        .drawer.active { right: 0; }
+        .drawer h3 { font-size: 1rem; color: var(--accent-cyan); margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+        .drawer a, .drawer button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; background: transparent; border: none; color: var(--text-main); font-size: 0.88rem; font-weight: 600; text-align: left; text-decoration: none; border-radius: 8px; cursor: pointer; }
+        .drawer a:hover, .drawer button:hover { background: rgba(99,102,241,0.2); }
+        .section-view { display: none; }
+        .section-view.active { display: block; }
+        .card { background: var(--surface); border: 1px solid var(--border-glow); border-radius: 14px; padding: 16px; margin-bottom: 15px; }
+        .btn { padding: 8px 14px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-cyan { background: var(--accent-cyan); color: #000; }
+        .btn-green { background: var(--accent-green); color: #fff; }
+        .btn-red { background: var(--accent-red); color: #fff; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; }
+        .tab-bar { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+        .tab-btn { background: var(--card); color: var(--text-muted); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-glow); cursor: pointer; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+        .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.8rem; }
+        th { color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; }
+        .pwd-truncate { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+        .greeting-banner { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.2)); border: 1px solid var(--border-glow); border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; font-size: 0.9rem; font-weight: 700; color: var(--accent-cyan); }
+        .camera-box { background: #000; border-radius: 12px; overflow: hidden; max-width: 500px; height: 280px; margin: 0 auto 15px; border: 1px solid var(--border-glow); display: flex; align-items: center; justify-content: center; position: relative; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    {% if greeting %}
+    <div class="greeting-banner"><i class="fa-solid fa-sparkles"></i> {{ greeting }}</div>
+    {% endif %}
+
+    <div class="navbar">
+        <div class="nav-title"><i class="fa-solid fa-graduation-cap" style="color: var(--accent-cyan);"></i> AttendVision Master Admin</div>
+        <button class="menu-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+
+    <!-- Scanner & Camera View -->
+    <div id="view-scanner" class="section-view active">
+        <div class="card" style="text-align: center;">
+            <h4 style="margin-bottom: 12px; color: var(--accent-cyan);"><i class="fa-solid fa-camera"></i> Live Attendance Scanning Hub</h4>
+            <div class="camera-box">
+                {% if scan_state.is_scanning %}
+                <img src="/video_feed" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                {% else %}
+                <div style="color: var(--text-muted); font-size: 0.85rem; padding: 20px;">
+                    <i class="fa-solid fa-video-slash" style="font-size: 2.2rem; color: #475569; margin-bottom: 10px; display: block;"></i>
+                    <strong>Camera in Standby Mode</strong><br>
+                    <span style="font-size: 0.75rem;">Select your group and click Start Scan to open the camera stream.</span>
+                </div>
+                {% endif %}
+            </div>
+            <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                {% if not scan_state.is_scanning %}
+                <form action="/start_scan" method="POST" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%;">
+                    <select name="target_group" style="padding: 10px 14px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff; font-size: 0.85rem; font-weight: 700; outline: none;">
+                        <option value="Group 1">Group 1</option>
+                        <option value="Group 2">Group 2</option>
+                        <option value="Group 3">Group 3</option>
+                        <option value="Group 4">Group 4</option>
+                        <option value="Group 5">Group 5</option>
+                        <option value="All Groups">All Groups (Global)</option>
+                    </select>
+                    <input type="text" name="subject" placeholder="Subject / Session Tag" value="{{ scan_state.subject }}" style="padding: 10px 14px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none;">
+                    <button type="submit" class="btn btn-green"><i class="fa-solid fa-play"></i> Start Scan Session</button>
+                </form>
+                {% else %}
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                    <div style="font-size: 0.85rem; color: var(--accent-green); font-weight: 700;">
+                        <i class="fa-solid fa-circle-dot fa-fade"></i> Active Session: {{ scan_state.subject }} ({{ scan_state.target_group or 'All Groups' }})
+                    </div>
+                    <form action="/stop_scan" method="POST">
+                        <button type="submit" class="btn btn-red"><i class="fa-solid fa-stop"></i> Finalize Session & Mark Absentees</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h4 style="color: var(--accent-green); margin-bottom: 8px;"><i class="fa-solid fa-bolt"></i> Manual Attendance Override</h4>
+            <form action="/manual_attendance" method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <input type="text" name="usn" placeholder="Student USN" required style="flex: 1; min-width: 140px; padding: 8px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff;">
+                <select name="status" style="width: 120px; padding: 8px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff;">
+                    <option value="PRESENT">PRESENT</option>
+                    <option value="ABSENT">ABSENT</option>
+                </select>
+                <input type="text" name="reason" placeholder="Reason / Remarks" style="flex: 1.5; min-width: 180px; padding: 8px; background: var(--card); border: 1px solid var(--border-glow); border-radius: 8px; color: #fff;">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Mark</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-list-check"></i> Today's Live Attendance Stream ({{ today }})</h4>
+                <form action="/deduplicate_attendance" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-red" style="padding: 4px 8px; font-size: 0.72rem;"><i class="fa-solid fa-broom"></i> Clean Duplicates</button>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr><th>USN & Name</th><th>Time</th><th>Status</th><th>Subject</th><th>Method / Remarks</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in today_records %}
+                        <tr>
+                            <td><strong>{{ r.name }}</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">{{ r.student_usn }}</span></td>
+                            <td style="color: var(--text-muted);">{{ r.time }}</td>
+                            <td style="font-weight: 800; color: {% if r.status == 'PRESENT' %}var(--accent-green){% else %}var(--accent-red){% endif %};">{{ r.status }}</td>
+                            <td>{{ r.subject }}</td>
+                            <td>{{ r.method }}<br><span style="color: var(--text-muted); font-size: 0.72rem;">{{ r.reason }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 12px;">No attendance logged yet today.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Groups View -->
+    <div id="view-groups" class="section-view">
+        <div class="tab-bar">
+            {% for g in ["Group 1", "Group 2", "Group 3", "Group 4", "Group 5"] %}
+            <button class="tab-btn {% if loop.first %}active{% endif %}" onclick="switchGroup('{{ g }}')">{{ g }} ({{ students_by_group[g]|length }})</button>
+            {% endfor %}
+        </div>
+
+        {% for g, list in students_by_group.items() %}
+        <div id="grp-content-{{ g|replace(' ', '') }}" class="grp-pane" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-users"></i> {{ g }} Roster</h4>
+                    <button class="btn btn-primary" onclick="openAddModal('{{ g }}')"><i class="fa-solid fa-user-plus"></i> Add Student to {{ g }}</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr><th>USN & Name</th><th>Email</th><th>Password</th><th>Attendance %</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for s in list %}
+                            <tr>
+                                <td><strong>{{ s.name }}</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">{{ s.usn }}</span></td>
+                                <td style="color: var(--text-muted);">{{ s.email }}</td>
+                                <td><span class="pwd-truncate" style="color: #818cf8; font-family: monospace;">{{ s.password }}</span></td>
+                                <td><strong style="color: {% if s.percentage >= 75 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{{ s.percentage }}%</strong> ({{ s.present_count }}/{{ s.total_count }})</td>
+                                <td>
+                                    <a href="/delete_student/{{ s.usn }}" onclick="return confirm('Delete student {{ s.name }}?');" class="btn btn-red" style="padding: 4px 8px; font-size: 0.72rem;"><i class="fa-solid fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 12px;">No students enrolled in {{ g }}.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Broadcast Materials View -->
+    <div id="view-broadcast" class="section-view">
+        <div class="card">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 10px;"><i class="fa-solid fa-cloud-arrow-up"></i> Share Course Files & Materials</h4>
+            <form action="/upload_material" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Title / Description</label>
+                    <input type="text" name="title" placeholder="e.g. Lab Manual Week 3" required>
+                </div>
+                <div class="form-group">
+                    <label>Target Audience</label>
+                    <select name="target_group">
+                        <option value="All Groups">All Groups (Global)</option>
+                        <option value="Group 1">Group 1</option>
+                        <option value="Group 2">Group 2</option>
+                        <option value="Group 3">Group 3</option>
+                        <option value="Group 4">Group 4</option>
+                        <option value="Group 5">Group 5</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select File</label>
+                    <input type="file" name="file" required>
+                </div>
+                <button type="submit" class="btn btn-green"><i class="fa-solid fa-upload"></i> Upload & Broadcast</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4 style="color: var(--accent-green); margin-bottom: 8px;"><i class="fa-solid fa-folder-open"></i> Broadcasted Materials</h4>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr><th>Title</th><th>Target</th><th>Upload Date</th><th>Download</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for f in shared_files %}
+                        <tr>
+                            <td><strong>{{ f.title }}</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">{{ f.filename }}</span></td>
+                            <td><span style="background: rgba(6,182,212,0.2); color: var(--accent-cyan); padding: 2px 6px; border-radius: 4px; font-size: 0.72rem;">{{ f.group }}</span></td>
+                            <td style="color: var(--text-muted);">{{ f.date }}</td>
+                            <td><a href="/download_file/{{ f.filename }}" class="btn btn-cyan" style="padding: 4px 8px; font-size: 0.72rem;"><i class="fa-solid fa-download"></i> Download</a></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 12px;">No broadcasted files yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+<div id="drawer" class="drawer">
+    <h3><i class="fa-solid fa-compass"></i> Admin Menu</h3>
+    <a href="javascript:void(0)" onclick="switchView('scanner')"><i class="fa-solid fa-camera"></i> Live Scanner & Logs</a>
+    <a href="javascript:void(0)" onclick="switchView('groups')"><i class="fa-solid fa-users-gear"></i> Student Groups Management</a>
+    <a href="/admin/components"><i class="fa-solid fa-boxes-stacked"></i> Hardware Requisitions {% if pending_hardware_count > 0 %}<span style="background:red; color:#fff; padding:2px 6px; border-radius:10px; font-size:0.65rem;">{{ pending_hardware_count }}</span>{% endif %}</a>
+    <a href="javascript:void(0)" onclick="switchView('broadcast')"><i class="fa-solid fa-bullhorn"></i> Materials Broadcast</a>
+    <a href="/report"><i class="fa-solid fa-chart-pie"></i> Archives & Session Reports</a>
+    <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+        <a href="/logout" style="color: var(--accent-red);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
+    </div>
+</div>
+
+<div id="addModal" class="drawer-overlay" style="display: none; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 420px; background: var(--surface);">
+        <h4 id="modalTitle" style="color: var(--accent-cyan); margin-bottom: 12px;"><i class="fa-solid fa-user-plus"></i> Add Student</h4>
+        <form action="/add_student" method="POST" enctype="multipart/form-data">
+            <input type="hidden" id="modalGroup" name="student_group" value="Group 1">
+            <div class="form-group"><label>USN</label><input type="text" name="usn" placeholder="e.g. 4GW25IS014" required></div>
+            <div class="form-group"><label>Full Name</label><input type="text" name="name" placeholder="Student Name" required></div>
+            <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="student@example.com" required></div>
+            <div class="form-group"><label>Password</label><input type="text" name="password" placeholder="Default is USN"></div>
+            <div class="form-group"><label>Face Photos (1-5)</label><input type="file" name="photos" multiple accept="image/*"></div>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Student</button>
+                <button type="button" class="btn btn-red" onclick="closeAddModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleDrawer() {
+        document.getElementById('drawer').classList.toggle('active');
+        document.getElementById('drawerOverlay').classList.toggle('active');
+    }
+
+    function switchView(viewName) {
+        document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-' + viewName).classList.add('active');
+        toggleDrawer();
+    }
+
+    function switchGroup(groupName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.grp-pane').forEach(p => p.style.display = 'none');
+        document.getElementById('grp-content-' + groupName.replace(/\s+/g, '')).style.display = 'block';
+    }
+
+    function openAddModal(groupName) {
+        document.getElementById('modalGroup').value = groupName;
+        document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Add Student to ' + groupName;
+        document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function closeAddModal() { document.getElementById('addModal').style.display = 'none'; }
+
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view && document.getElementById('view-' + view)) {
+        document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-' + view).classList.add('active');
+    }
+</script>
+</body>
+</html>
