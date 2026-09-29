@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS admin_config (
     email TEXT
 );
 
-INSERT OR REPLACE INTO admin_config (id, username, password, email) 
-VALUES (1, 'admin', 'admin123', 'YOUR_GMAIL_ADDRESS_HERE');
+-- Admin account should be created securely by the application.
+-- Do not store default passwords or personal email addresses here.
 
 CREATE TABLE IF NOT EXISTS shared_files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
