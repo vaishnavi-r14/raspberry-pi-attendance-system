@@ -1,3 +1,5 @@
+<img width="512" height="512" alt="icon" src="https://github.com/user-attachments/assets/e86313af-3975-4fe6-b9a0-19cc7e2b9eff" />
+
 # AttendVision – Raspberry Pi Smart Attendance System
 
 A smart attendance management system developed using Raspberry Pi, Python, Flask, OpenCV, QR codes, and SQLite.
